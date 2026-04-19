@@ -1,1 +1,12 @@
-<div>{% if error %}error{% endif %} <form>password</form></div>
+{% extends "base.html" %}
+{% block title %}אדמין — Nadlan AI{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="brand">Nadlan AI — ניהול</div>
+  <form method="POST" class="admin-form">
+    <input type="password" name="password" placeholder="סיסמת מנהל" autofocus required>
+    {% if error %}<div class="form-error">סיסמה שגויה</div>{% endif %}
+    <button type="submit">כניסה</button>
+  </form>
+</div>
+{% endblock %}

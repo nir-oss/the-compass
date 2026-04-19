@@ -1,1 +1,22 @@
-<div>chat</div>
+{% extends "base.html" %}
+{% block title %}Nadlan AI{% endblock %}
+{% block content %}
+<div class="app-layout">
+  <nav class="top-nav">
+    <span class="brand-text">Nadlan AI</span>
+  </nav>
+  <div class="chat-container" id="chat-container">
+    <div class="bubble bot">
+      <div class="avatar bot-avatar">AI</div>
+      <div class="message">שלום 👋 שאל אותי כל שאלה על שוק הנדל״ן בישראל — מחירים, מגמות, רחובות.</div>
+    </div>
+  </div>
+  <div class="input-bar">
+    <input type="text" id="question-input" placeholder="שאל שאלה..." autocomplete="off">
+    <button id="send-btn" onclick="sendQuestion()">↑</button>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='chat.js') }}"></script>
+{% endblock %}

@@ -1,1 +1,11 @@
-<div>report {{ report_id }}</div>
+{% extends "base.html" %}
+{% block title %}דוח — Nadlan AI{% endblock %}
+{% block content %}
+<div class="report-layout">
+  <div class="report-nav">
+    <a href="/" class="back-link">← חזרה לצ׳אט</a>
+    <span class="report-title">{{ report.street or report.settlement or 'דוח' }}</span>
+  </div>
+  <iframe src="{{ url_for('report_file', report_id=report_id) }}" class="report-frame" title="דוח נדל״ן"></iframe>
+</div>
+{% endblock %}

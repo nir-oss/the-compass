@@ -1,1 +1,52 @@
-<div>admin</div>
+{% extends "base.html" %}
+{% block title %}ניהול — Nadlan AI{% endblock %}
+{% block content %}
+<div class="admin-layout">
+  <h1 class="admin-title">ניהול לקוחות</h1>
+
+  <div class="admin-card">
+    <h2>יצירת קישור ללקוח חדש</h2>
+    <form id="create-form" class="create-form" onsubmit="createLink(event)">
+      <input type="text" id="client-name" placeholder="שם הלקוח" required>
+      <button type="submit">✦ צור קישור</button>
+    </form>
+    <div id="link-result" class="link-result" style="display:none">
+      <div class="link-label">קישור ללקוח (שלח ב-WhatsApp):</div>
+      <div class="link-value" id="link-value"></div>
+      <button onclick="copyLink()">העתק</button>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>לקוחות פעילים</h2>
+    <table class="admin-table">
+      <tr><th>שם</th><th>תאריך הוספה</th><th>תפוגת קישור</th></tr>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.name }}</td>
+        <td>{{ u.created_at[:10] }}</td>
+        <td>{{ u.link_expires[:10] if u.link_expires else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+<script>
+async function createLink(e) {
+  e.preventDefault();
+  const name = document.getElementById('client-name').value.trim();
+  if (!name) return;
+  const fd = new FormData();
+  fd.append('name', name);
+  const resp = await fetch('/admin/create-link', {method: 'POST', body: fd});
+  const data = await resp.json();
+  document.getElementById('link-value').textContent = data.link;
+  document.getElementById('link-result').style.display = 'block';
+  document.getElementById('client-name').value = '';
+}
+function copyLink() {
+  navigator.clipboard.writeText(document.getElementById('link-value').textContent);
+  alert('הקישור הועתק!');
+}
+</script>
+{% endblock %}

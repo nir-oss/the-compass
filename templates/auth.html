@@ -1,1 +1,13 @@
-<div>{% if error %}error{% endif %}</div>
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-container">
+  <div class="brand">Nadlan AI</div>
+  {% if error %}
+    <div class="auth-message error">
+      הקישור אינו תקף או פג תוקף.<br>צור קשר עם ניר לקישור חדש.
+    </div>
+  {% else %}
+    <div class="auth-message">מחבר אותך אוטומטית...</div>
+  {% endif %}
+</div>
+{% endblock %}
