@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="he" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>Nadlan Research — Design Spec</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         max-width: 860px; margin: 40px auto; padding: 0 24px;
+         color: #1a1a1a; line-height: 1.7; }
+  h1 { color: #1d3557; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+  h2 { color: #457b9d; margin-top: 2em; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+  h3 { color: #333; }
+  pre { background: #f5f5f5; padding: 16px; border-radius: 6px;
+         overflow-x: auto; font-size: 0.87em; border: 1px solid #e0e0e0; }
+  code { background: #eef0f2; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1.2em 0; }
+  th { background: #1d3557; color: white; padding: 9px 14px; text-align: left; }
+  td { border: 1px solid #ddd; padding: 8px 14px; }
+  tr:nth-child(even) td { background: #f9f9f9; }
+  li { margin: 4px 0; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 2em 0; }
+  p { margin: 0.6em 0; }
+  strong { color: #1d3557; }
+</style>
+</head>
+<body>
+<h1>Nadlan Research System — Design Spec</h1>
+
+<p><strong>Date:</strong> 2026-04-19  </p>
+<p><strong>Status:</strong> Approved  </p>
+<p><strong>Scope:</strong> Phase 1 — Claude as central engine</p>
+
+<hr>
+
+<h2>Goal</h2>
+
+<p>A system that lets a user ask a free-form Hebrew question about a real estate area (e.g. "מה קורה בדיזנגוף? כדאי לקנות שם?") and receive:</p>
+<p>1. An HTML report with real transaction data, price statistics, trends, and comparisons</p>
+<p>2. A short verbal summary from Claude in the conversation</p>
+
+<p>Target users: the developer runs it, clients receive the HTML report.</p>
+
+<hr>
+
+<h2>Architecture</h2>
+
+<pre><code>
+Free-form question (Hebrew)
+        ↓
+[Skill: nadlan-research]
+Claude parses → settlement, streets, period, property type
+        ↓
+research.py  (orchestrator / entry point)
+        ↓
+nadlan_scraper.py  ←→  nadlan.gov.il API
+(fetches real transactions via reCAPTCHA + JWT)
+        ↓
+analyze.py
+(statistics: averages, medians, trends, comparisons)
+        ↓
+report.py
+(generates Hebrew HTML report, opens in browser)
+        ↓
+HTML report + Claude verbal summary (3 key findings)
+</code></pre>
+
+<h3>Files</h3>
+
+<table>
+<tr><th>File</th><th>Role</th></tr>
+<tr><th>`nadlan_scraper.py`</th><th>**Existing.** Fetches transactions from nadlan.gov.il (Playwright + JWT auth)</th></tr>
+<tr><th>`analyze.py`</th><th>**New.** Pure functions: takes raw deals list, returns statistics dict</th></tr>
+<tr><th>`report.py`</th><th>**New.** Takes statistics dict, generates self-contained HTML file</th></tr>
+<tr><th>`research.py`</th><th>**New.** CLI orchestrator: scrape → analyze → report → open browser</th></tr>
+<tr><th>`skills/nadlan-research.md`</th><th>**New.** Skill file instructing Claude how to drive the system</th></tr>
+</table>
+
+<hr>
+
+<h2>Skill: nadlan-research</h2>
+
+<p>The skill instructs Claude to follow 4 steps when activated:</p>
+
+<p><strong>Step 1 — Parse the question</strong></p>
+<p>Extract from natural language:</p>
+<li>Settlement (יישוב) — default: ask user if ambiguous</li>
+<li>Streets — 1 specific street OR top 3–5 streets in area for comparison</li>
+<li>Period — default: last 2 years</li>
+<li>Property type — default: all types</li>
+
+<p>If the question is ambiguous about location, Claude asks one clarifying question before proceeding.</p>
+
+<p><strong>Step 2 — Fetch data</strong></p>
+<p>Run <code>research.py --settlement X --street Y [--year Z]</code>.  </p>
+<p>The script handles reCAPTCHA automatically via Playwright.</p>
+
+<p><strong>Step 3 — Analyze</strong></p>
+<p><code>analyze.py</code> is called internally by <code>research.py</code>. Output is a JSON statistics file alongside the HTML.</p>
+
+<p><strong>Step 4 — Report + Summary</strong></p>
+<p>HTML report opens automatically. Claude reads the statistics JSON and writes a 3–4 sentence Hebrew summary in the conversation, answering the user's original question directly.</p>
+
+<hr>
+
+<h2>analyze.py — Statistics</h2>
+
+<p>Input: list of deal dicts (from <code>nadlan_scraper.py</code> output)  </p>
+<p>Output: structured dict with:</p>
+
+<pre><code>
+{
+  "meta": {
+    "street": str, "settlement": str,
+    "period_from": str, "period_to": str,
+    "total_deals": int
+  },
+  "prices": {
+    "mean": float, "median": float,
+    "mean_per_sqm": float, "median_per_sqm": float,
+    "by_rooms": {2: {...}, 3: {...}, 4: {...}},
+    "by_floor_type": {"ground": {...}, "low": {...}, "high": {...}}
+  },
+  "trends": {
+    "by_quarter": [{"label": "Q1 2025", "count": int, "mean_price": float}, ...],
+    "direction": "rising" | "falling" | "stable",
+    "volume_change_pct": float   # vs same period last year
+  },
+  "outliers": [deal, ...],       # &gt;30% above or below mean
+  "street_comparison": [         # populated when multiple streets fetched
+    {"street": str, "mean_price": float, "mean_per_sqm": float, "count": int}
+  ]
+}
+</code></pre>
+
+<p>Floor classification: "קרקע" → ground, floors 1–3 → low, 4+ → high.  </p>
+<p>Outlier threshold: ±30% from mean price per sqm.</p>
+
+<hr>
+
+<h2>report.py — HTML Report</h2>
+
+<p><strong>Self-contained HTML</strong> (no external dependencies — CSS inline, no JS libraries).  </p>
+<p><strong>RTL Hebrew</strong>, professional and clean — not decorative.</p>
+
+<h3>Sections</h3>
+
+<p>1. <strong>Header</strong> — title, date generated, period covered</p>
+<p>2. <strong>Executive Summary</strong> — 3–4 auto-generated Hebrew sentences from the statistics</p>
+<p>3. <strong>Price Data</strong> — mean/median overall, table by room count (2/3/4+ rooms)</p>
+<p>4. <strong>Trends</strong> — bar chart (CSS only) showing quarterly deal volume and average price</p>
+<p>5. <strong>Recent Transactions</strong> — table: date | address | price | sqm | rooms | floor | type</p>
+<p>6. <strong>Outliers</strong> — flagged deals significantly above/below average (if any)</p>
+<p>7. <strong>Street Comparison</strong> — table comparing streets (populated for area-level queries)</p>
+
+<p><strong>Filename:</strong> <code>report_{street}_{YYYY-MM-DD}.html</code>  </p>
+<p><strong>Opens automatically</strong> in the default browser after generation.</p>
+
+<hr>
+
+<h2>research.py — CLI Orchestrator</h2>
+
+<pre><code>
+python3 research.py --settlement "תל אביב" --street "דיזנגוף" [--limit 200] [--year 2025]
+</code></pre>
+
+<p>Steps:</p>
+<p>1. Call <code>nadlan_scraper.py</code> → save <code>deals_raw.json</code></p>
+<p>2. Call <code>analyze.py</code> → save <code>analysis.json</code></p>
+<p>3. Call <code>report.py</code> → save <code>report_*.html</code></p>
+<p>4. Open HTML in browser</p>
+<p>5. Print brief stats summary to stdout</p>
+
+<p>All output files saved to <code>./output/</code> directory.</p>
+
+<hr>
+
+<h2>Error Handling</h2>
+
+<table>
+<tr><th>Scenario</th><th>Behavior</th></tr>
+<tr><th>reCAPTCHA token not obtained</th><th>Print instructions for manual token, exit with code 1</th></tr>
+<tr><th>Street not found in settlement</th><th>Warn, fall back to settlement-level search</th></tr>
+<tr><th>Fewer than 5 deals found</th><th>Generate report with warning banner, skip trend charts</th></tr>
+<tr><th>Settlement not found</th><th>Print available settlements, exit</th></tr>
+</table>
+
+<hr>
+
+<h2>Out of Scope (Phase 1)</h2>
+
+<li>Scheduled/automated runs</li>
+<li>Multiple cities in one query</li>
+<li>Price prediction / ML</li>
+<li>User authentication or web interface</li>
+<li>PDF export</li>
+
+</body>
+</html>
