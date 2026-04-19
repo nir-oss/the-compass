@@ -21,6 +21,10 @@ function appendBubble(role, content) {
 function handleEvent(event, bubble) {
   const msgEl = bubble.querySelector('.message');
 
+  // Remove typing indicator on first real event
+  const typing = bubble.querySelector('.typing-indicator');
+  if (typing) typing.remove();
+
   if (event.step === 'error') {
     const span = document.createElement('span');
     span.className = 'error-text';
@@ -57,7 +61,15 @@ function handleEvent(event, bubble) {
   }
   const span = document.createElement('span');
   span.className = event.step || 'progress';
-  span.textContent = event.text || '';
+  const stepIcons = {
+    parsed: '✓',
+    fetching: '⟳',
+    progress: '·',
+    analyzing: '⟳',
+    summarizing: '⟳',
+  };
+  const icon = stepIcons[event.step] || '·';
+  span.textContent = `${icon} ${event.text}`;
   msgEl.appendChild(span);
 
   const container = bubble.parentElement;
@@ -75,6 +87,12 @@ async function sendQuestion() {
 
   appendBubble('user', question);
   const botBubble = appendBubble('bot', '');
+  const msgEl = botBubble.querySelector('.message');
+  // Show typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'typing-indicator';
+  typingDiv.innerHTML = '<span></span><span></span><span></span>';
+  msgEl.appendChild(typingDiv);
 
   let reader = null;
 
