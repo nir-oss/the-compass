@@ -97,16 +97,79 @@ def lookup_settlement(name: str) -> Optional[int]:
     return None
 
 
-def lookup_street(settlement_id: int, street_name: str) -> Optional[int]:
-    """Find street ID within a settlement."""
+def _get_settlement_page(settlement_id: int) -> dict:
     r = _req.get(f"{DATA_BASE}/pages/settlement/buy/{settlement_id}.json",
                  headers={"Referer": "https://www.nadlan.gov.il/"}, timeout=15)
     r.raise_for_status()
-    streets = r.json().get("otherSettlmentStreets", [])
+    return r.json()
+
+
+def lookup_street(settlement_id: int, street_name: str) -> Optional[int]:
+    """Find street ID within a settlement."""
+    data = _get_settlement_page(settlement_id)
+    streets = data.get("otherSettlmentStreets", [])
     name_lower = street_name.lower()
     for s in streets:
         if isinstance(s, dict) and name_lower in s.get("title", "").lower():
             return s["id"]
+    return None
+
+
+def _norm_heb(s: str) -> str:
+    """Normalize Hebrew text for fuzzy matching: remove geresh/gershayim, lowercase."""
+    return s.replace('׳', '').replace('״', '').replace('"', '').replace("'", '').strip().lower()
+
+
+def lookup_neighborhood(settlement_id: int, neighborhood_name: str) -> Optional[tuple]:
+    """
+    Find neighborhood ID within a settlement.
+    Returns (neighborhood_id, matched_name) or None.
+
+    Tries the settlement page JSON for a neighborhood list. Falls back to None
+    so the caller can use client-side filtering as a fallback.
+    """
+    import difflib
+
+    data = _get_settlement_page(settlement_id)
+
+    # Try known field names the API might use for neighborhood lists
+    neighborhoods = (
+        data.get("neighborhoods") or
+        data.get("otherSettlmentNeighborhood") or
+        data.get("settlementNeighborhoods") or
+        data.get("otherNeighborhoods") or
+        []
+    )
+
+    if not neighborhoods:
+        return None
+
+    name_norm = _norm_heb(neighborhood_name)
+    candidates = {}
+
+    for n in neighborhoods:
+        if not isinstance(n, dict):
+            continue
+        title = (n.get("title") or n.get("name") or
+                 n.get("NEIGHBORHOOD_NAME") or n.get("neighborhoodName") or "")
+        nid = (n.get("id") or n.get("neighborhoodId") or
+               n.get("NEIGHBORHOOD_ID"))
+        if not title or not nid:
+            continue
+        title_norm = _norm_heb(title)
+        # Exact normalized substring match
+        if name_norm in title_norm or title_norm in name_norm:
+            return (int(nid), title)
+        candidates[title] = int(nid)
+
+    if candidates:
+        # Fuzzy match on normalized names
+        norm_map = {_norm_heb(k): (k, v) for k, v in candidates.items()}
+        matches = difflib.get_close_matches(name_norm, list(norm_map.keys()), n=1, cutoff=0.6)
+        if matches:
+            original_title, nid = norm_map[matches[0]]
+            return (nid, original_title)
+
     return None
 
 
@@ -122,16 +185,21 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
     token_holder = []
 
     async with async_playwright() as p:
+        common_args = [
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ]
         try:
             browser = await p.chromium.launch(
                 channel="chrome",
-                headless=True,
-                args=["--disable-blink-features=AutomationControlled"],
+                headless=False,
+                args=common_args,
             )
         except Exception:
             browser = await p.chromium.launch(
-                headless=True,
-                args=["--disable-blink-features=AutomationControlled"],
+                headless=False,
+                args=common_args,
             )
 
         context = await browser.new_context(
@@ -168,16 +236,76 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
 
 # ─── API fetch ────────────────────────────────────────────────────────────────
 
+def _rooms_match(room_num, rooms_filter: Optional[str]) -> bool:
+    """
+    Match a deal's roomNum against a rooms filter string.
+    "3"   → exactly 3 rooms
+    "4.5" → exactly 4.5 rooms
+    "3-4" → 3, 3.5, or 4 rooms (inclusive range)
+    "5+"  → 5 or more rooms
+    None  → always matches (no filter)
+    """
+    if rooms_filter is None:
+        return True
+    if room_num is None:
+        return False
+    try:
+        val = float(room_num)
+        if "-" in rooms_filter:
+            lo, hi = rooms_filter.split("-", 1)
+            return float(lo) <= val <= float(hi)
+        if rooms_filter.endswith("+"):
+            return val >= float(rooms_filter[:-1])
+        return val == float(rooms_filter)
+    except (ValueError, TypeError):
+        return False
+
+
 def fetch_deals(base_id, base_name: str, recaptcha_token: str,
-                max_items: int = 100, year: Optional[int] = None) -> list:
-    """Fetch deals from the deal-data API with pagination."""
+                max_items: int = 100, year: Optional[int] = None,
+                min_year: Optional[int] = None,
+                neighborhood_filter: Optional[str] = None,
+                rooms: Optional[str] = None,
+                property_type: Optional[str] = None,
+                min_price: Optional[int] = None,
+                max_price: Optional[int] = None,
+                min_area: Optional[float] = None,
+                max_area: Optional[float] = None) -> list:
+    """
+    Fetch deals from the deal-data API with pagination and optional client-side filters.
+
+    Property filters (rooms, property_type, price, area) are applied after fetching.
+    neighborhood_filter is also client-side when no direct neighborhood ID is available.
+    """
     all_deals = []
     page_num = 1
+    total_raw_fetched = 0
+    MAX_PAGES = 20
 
-    while len(all_deals) < max_items:
+    has_client_filter = any([neighborhood_filter, rooms, property_type, min_price, max_price,
+                             min_area, max_area, min_year])
+
+    while len(all_deals) < max_items and page_num <= MAX_PAGES:
         body = _build_body(base_id, base_name, recaptcha_token, fetch_number=page_num)
         r = _req.post(f"{API_BASE}/deal-data", json=body, headers=HEADERS, timeout=30)
-        r.raise_for_status()
+
+        # API returns HTTP 405 when the reCAPTCHA token is rejected
+        if r.status_code == 405:
+            print("  reCAPTCHA token rejected (HTTP 405) — token expired or bot-detected.")
+            try:
+                import token_cache
+                token_cache.force_refresh()
+            except ImportError:
+                pass
+            break
+        if r.status_code == 403:
+            print("  Rate limited (HTTP 403).")
+            break
+        try:
+            r.raise_for_status()
+        except Exception as e:
+            print(f"  HTTP error: {e}")
+            break
 
         try:
             data = _decompress(r.text)
@@ -190,10 +318,10 @@ def fetch_deals(base_id, base_name: str, recaptcha_token: str,
 
         status = data.get("statusCode", 0)
         if status == 405:
-            print("  reCAPTCHA token rejected (405). Token may have expired.")
+            print("  reCAPTCHA token rejected (JSON 405).")
             break
         if status == 403:
-            print("  Rate limited (403).")
+            print("  Rate limited (JSON 403).")
             break
         if status != 200:
             print(f"  API error {status}: {data.get('body', '')[:100]}")
@@ -201,8 +329,10 @@ def fetch_deals(base_id, base_name: str, recaptcha_token: str,
 
         items = data.get("data", {}).get("items", [])
         total = data.get("data", {}).get("total_rows", 0)
+        page_size = len(items)
+        total_raw_fetched += page_size
 
-        # Filter by year if requested
+        # Year filter (exact year)
         if year:
             filtered = []
             for deal in items:
@@ -215,10 +345,46 @@ def fetch_deals(base_id, base_name: str, recaptcha_token: str,
                     filtered.append(deal)
             items = filtered
 
-        all_deals.extend(items)
-        print(f"  Page {page_num}: {len(items)} deals (total so far: {len(all_deals)}/{total})")
+        # min_year filter (from year X onwards)
+        if min_year:
+            filtered = []
+            for deal in items:
+                date_str = deal.get("DEALDATETIME") or deal.get("DEALDATE") or ""
+                try:
+                    deal_year = datetime.fromisoformat(date_str.replace("Z", "+00:00")).year
+                    if deal_year >= min_year:
+                        filtered.append(deal)
+                except Exception:
+                    filtered.append(deal)
+            items = filtered
 
-        if not items or len(all_deals) >= min(max_items, total):
+        # Neighborhood client-side filter (normalized to handle geresh variants)
+        if neighborhood_filter:
+            nbhd_norm = _norm_heb(neighborhood_filter)
+            items = [d for d in items
+                     if nbhd_norm in _norm_heb(d.get("neighborhoodName") or "")]
+
+        # Property filters
+        if rooms:
+            items = [d for d in items if _rooms_match(d.get("roomNum"), rooms)]
+        if property_type:
+            pt_lower = property_type.lower()
+            items = [d for d in items
+                     if pt_lower in (d.get("dealNature") or "").lower()]
+        if min_price:
+            items = [d for d in items if (d.get("dealAmount") or 0) >= min_price]
+        if max_price:
+            items = [d for d in items if (d.get("dealAmount") or 0) <= max_price]
+        if min_area:
+            items = [d for d in items if (d.get("assetArea") or 0) >= min_area]
+        if max_area:
+            items = [d for d in items if (d.get("assetArea") or 0) <= max_area]
+
+        all_deals.extend(items)
+        print(f"  Page {page_num}: {len(items)} deals matched "
+              f"(total so far: {len(all_deals)}/{total})")
+
+        if not page_size or total_raw_fetched >= total:
             break
         page_num += 1
 

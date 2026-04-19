@@ -1,0 +1,110 @@
+<h2>מה הכיוון הוויזואלי של האתר?</h2>
+<p class="subtitle">שלוש גישות — בחר את שמרגיש הכי נכון לך</p>
+
+<div class="cards">
+
+  <!-- Option A: Search-First -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f0f4f8;padding:20px;font-family:Arial,sans-serif;direction:rtl">
+      <div style="background:#1d3557;color:white;padding:10px 16px;border-radius:6px 6px 0 0;font-size:11px;font-weight:600">🏠 נדל״ן ישראל</div>
+      <div style="background:white;padding:24px;text-align:center;border:1px solid #ddd;border-top:none">
+        <div style="font-size:18px;font-weight:700;color:#1d3557;margin-bottom:6px">מה שוק הנדל״ן אומר?</div>
+        <div style="font-size:11px;color:#666;margin-bottom:16px">חפש לפי רחוב, שכונה או עיר</div>
+        <div style="display:flex;gap:8px;max-width:300px;margin:0 auto">
+          <div style="flex:1;border:2px solid #457b9d;border-radius:6px;padding:8px 12px;font-size:11px;color:#999;text-align:right">דיזנגוף, תל אביב...</div>
+          <div style="background:#457b9d;color:white;padding:8px 14px;border-radius:6px;font-size:11px;white-space:nowrap">חפש</div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <span style="background:#eaf2fb;color:#457b9d;padding:4px 10px;border-radius:12px;font-size:10px">דיזנגוף</span>
+          <span style="background:#eaf2fb;color:#457b9d;padding:4px 10px;border-radius:12px;font-size:10px">רחוב בן יהודה</span>
+          <span style="background:#eaf2fb;color:#457b9d;padding:4px 10px;border-radius:12px;font-size:10px">רמת גן</span>
+        </div>
+      </div>
+      <div style="background:#f7f8fa;padding:10px 16px;display:flex;gap:12px;border:1px solid #ddd;border-top:none;border-radius:0 0 6px 6px">
+        <div style="text-align:center;flex:1"><div style="font-size:13px;font-weight:700;color:#1d3557">₪4.2M</div><div style="font-size:9px;color:#888">ממוצע</div></div>
+        <div style="text-align:center;flex:1"><div style="font-size:13px;font-weight:700;color:#1d3557">87</div><div style="font-size:9px;color:#888">עסקאות</div></div>
+        <div style="text-align:center;flex:1"><div style="font-size:13px;font-weight:700;color:#2a9d8f">עולה ↑</div><div style="font-size:9px;color:#888">מגמה</div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>א — Search-First (כמו מדלן / Zillow)</h3>
+      <p>Hero גדול עם שורת חיפוש מרכזית. נקי, מוכר, אינטואיטיבי. המשתמש יודע מה לעשות מיד.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Dashboard / Data-First -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f1923;padding:16px;font-family:Arial,sans-serif;direction:rtl;border-radius:6px 6px 0 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <span style="color:#64ffda;font-size:11px;font-weight:700">NADLAN INTEL</span>
+        <div style="display:flex;gap:8px">
+          <span style="color:#8892b0;font-size:10px">תל אביב</span>
+          <span style="color:#8892b0;font-size:10px">|</span>
+          <span style="color:#64ffda;font-size:10px">דיזנגוף</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:#1a2634;border:1px solid #2a9d8f33;border-radius:4px;padding:8px;text-align:center">
+          <div style="color:#64ffda;font-size:14px;font-weight:700">₪4.2M</div>
+          <div style="color:#8892b0;font-size:9px">ממוצע</div>
+        </div>
+        <div style="background:#1a2634;border:1px solid #2a9d8f33;border-radius:4px;padding:8px;text-align:center">
+          <div style="color:#64ffda;font-size:14px;font-weight:700">₪67K</div>
+          <div style="color:#8892b0;font-size:9px">למ״ר</div>
+        </div>
+        <div style="background:#1a2634;border:1px solid #64ffda33;border-radius:4px;padding:8px;text-align:center">
+          <div style="color:#2a9d8f;font-size:14px;font-weight:700">↑ 4.2%</div>
+          <div style="color:#8892b0;font-size:9px">מגמה</div>
+        </div>
+      </div>
+      <div style="background:#1a2634;border-radius:4px;padding:8px">
+        <div style="color:#8892b0;font-size:9px;margin-bottom:6px">נפח עסקאות רבעוני</div>
+        <div style="display:flex;align-items:flex-end;gap:3px;height:30px">
+          <div style="background:#457b9d;width:14px;height:40%"></div>
+          <div style="background:#457b9d;width:14px;height:60%"></div>
+          <div style="background:#457b9d;width:14px;height:80%"></div>
+          <div style="background:#64ffda;width:14px;height:100%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>ב — Dashboard Analytic (כמו Bloomberg / Grafana)</h3>
+      <p>ממשק כהה ומקצועי לאנשי נדל"ן. הנתונים בחזית. מרגיש כמו כלי עבודה רציני.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Conversational AI -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#fafaf8;padding:16px;font-family:Arial,sans-serif;direction:rtl;border-radius:6px 6px 0 0">
+      <div style="background:white;border:1px solid #e5e5e5;border-radius:10px;padding:12px;margin-bottom:8px">
+        <div style="font-size:10px;color:#888;margin-bottom:8px;text-align:center">שאל שאלה חופשית</div>
+        <!-- AI message -->
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;flex-direction:row-reverse">
+          <div style="background:#1d3557;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0">AI</div>
+          <div style="background:#f0f4f8;padding:8px 10px;border-radius:8px 8px 8px 0;font-size:10px;color:#333;max-width:200px">שלום! אני יכול לנתח עבורך כל אזור בישראל. על איזה רחוב תרצה לדעת?</div>
+        </div>
+        <!-- User message -->
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start">
+          <div style="background:#555;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0">נ</div>
+          <div style="background:#1d3557;color:white;padding:8px 10px;border-radius:8px 8px 0 8px;font-size:10px;max-width:180px">כדאי לקנות בדיזנגוף?</div>
+        </div>
+        <!-- AI response -->
+        <div style="display:flex;gap:8px;align-items:flex-start;flex-direction:row-reverse">
+          <div style="background:#1d3557;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0">AI</div>
+          <div style="background:#f0f4f8;padding:8px 10px;border-radius:8px 8px 8px 0;font-size:10px;color:#333;max-width:200px">87 עסקאות, ממוצע ₪4.2M. המגמה עולה 4.2%. <span style="color:#457b9d;text-decoration:underline">פתח דוח מלא →</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <div style="flex:1;background:white;border:1px solid #ddd;border-radius:6px;padding:7px 10px;font-size:10px;color:#999;text-align:right">שאל שאלה...</div>
+        <div style="background:#1d3557;color:white;padding:7px 12px;border-radius:6px;font-size:10px">שלח</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>ג — Conversational AI (כמו Perplexity)</h3>
+      <p>צ'אט בעברית חופשית. המשתמש שואל, המערכת עונה עם מספרים ומציעה דוח מלא. טבעי וחכם.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;text-align:center">לחץ על הכרטיסייה שמרגישה הכי נכונה → ענה בטרמינל</p>

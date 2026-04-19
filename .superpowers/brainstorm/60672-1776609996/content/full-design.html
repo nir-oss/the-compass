@@ -1,0 +1,154 @@
+<h2>עיצוב מלא — Nadlan AI Web App</h2>
+<p class="subtitle">Flask + SQLite · סגנון Modern Warm · Magic Link auth</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;font-family:-apple-system,Arial,sans-serif;direction:rtl">
+
+  <!-- Screen 1: Magic Link Landing -->
+  <div class="mockup">
+    <div class="mockup-header">1 · כניסה (magic link)</div>
+    <div class="mockup-body" style="background:linear-gradient(135deg,#fff8f0,#f0f4ff);padding:20px;text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">🏠</div>
+      <div style="font-weight:800;font-size:13px;background:linear-gradient(135deg,#e76f51,#457b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">Nadlan AI</div>
+      <div style="font-size:10px;color:#666;margin-bottom:14px">מכיר אותך — מחבר...</div>
+      <div style="background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;padding:8px 16px;border-radius:20px;font-size:11px;display:inline-block">כניסה אוטומטית ✓</div>
+      <div style="font-size:9px;color:#aaa;margin-top:10px">הקישור תקף 7 ימים</div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Chat -->
+  <div class="mockup">
+    <div class="mockup-header">2 · צ׳אט</div>
+    <div class="mockup-body" style="background:linear-gradient(135deg,#fff8f0,#f0f4ff);padding:0;overflow:hidden">
+      <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.8);border-bottom:1px solid rgba(0,0,0,.06)">
+        <div style="font-size:10px;font-weight:800;background:linear-gradient(135deg,#e76f51,#457b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Nadlan AI</div>
+        <div style="font-size:9px;color:#888">רוני ✦</div>
+      </div>
+      <div style="padding:10px">
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-direction:row-reverse">
+          <div style="width:18px;height:18px;background:linear-gradient(135deg,#457b9d,#2a9d8f);border-radius:50%;font-size:7px;color:white;display:flex;align-items:center;justify-content:center;flex-shrink:0">AI</div>
+          <div style="background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.07);padding:6px 8px;border-radius:10px 10px 10px 2px;font-size:9px;line-height:1.5;max-width:160px;box-shadow:0 2px 6px rgba(0,0,0,.05)">שלום 👋 שאל על כל אזור בישראל</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <div style="width:18px;height:18px;background:#e76f51;border-radius:50%;font-size:7px;color:white;display:flex;align-items:center;justify-content:center;flex-shrink:0">ר</div>
+          <div style="background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;padding:6px 8px;border-radius:10px 10px 2px 10px;font-size:9px;max-width:140px">כדאי לקנות בדיזנגוף?</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-direction:row-reverse">
+          <div style="width:18px;height:18px;background:linear-gradient(135deg,#457b9d,#2a9d8f);border-radius:50%;font-size:7px;color:white;display:flex;align-items:center;justify-content:center;flex-shrink:0">AI</div>
+          <div style="background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.07);padding:6px 8px;border-radius:10px 10px 10px 2px;font-size:9px;line-height:1.5;max-width:160px;box-shadow:0 2px 6px rgba(0,0,0,.05)">87 עסקאות, ₪4.2M, מגמה עולה 📈<br><span style="display:inline-block;margin-top:4px;background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;padding:2px 8px;border-radius:10px;font-size:8px">דוח מלא →</span></div>
+        </div>
+      </div>
+      <div style="padding:6px 10px;display:flex;gap:6px">
+        <div style="flex:1;background:rgba(255,255,255,.9);border-radius:16px;padding:6px 10px;font-size:9px;color:#aaa;box-shadow:0 2px 6px rgba(0,0,0,.06);direction:rtl;text-align:right">שאל שאלה...</div>
+        <div style="background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px">↑</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 3: Loading with SSE -->
+  <div class="mockup">
+    <div class="mockup-header">3 · טעינה (SSE live)</div>
+    <div class="mockup-body" style="background:linear-gradient(135deg,#fff8f0,#f0f4ff);padding:10px">
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <div style="width:18px;height:18px;background:#e76f51;border-radius:50%;font-size:7px;color:white;display:flex;align-items:center;justify-content:center;flex-shrink:0">ר</div>
+        <div style="background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;padding:6px 8px;border-radius:10px 10px 2px 10px;font-size:9px">כדאי לקנות בדיזנגוף?</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-direction:row-reverse">
+        <div style="width:18px;height:18px;background:linear-gradient(135deg,#457b9d,#2a9d8f);border-radius:50%;font-size:7px;color:white;display:flex;align-items:center;justify-content:center;flex-shrink:0">AI</div>
+        <div style="background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.07);padding:8px 10px;border-radius:10px 10px 10px 2px;font-size:9px;line-height:1.8;max-width:160px;box-shadow:0 2px 6px rgba(0,0,0,.05)">
+          <div style="color:#2a9d8f">✓ זיהיתי: תל אביב, דיזנגוף</div>
+          <div style="color:#457b9d">⟳ מושך עסקאות...</div>
+          <div style="color:#bbb">⌛ מנתח נתונים...</div>
+          <div style="color:#bbb">⌛ מייצר דוח...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 4: Report in site -->
+  <div class="mockup">
+    <div class="mockup-header">4 · דוח מלא (בתוך האתר)</div>
+    <div class="mockup-body" style="background:#f7f8fa;padding:8px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:9px;color:#457b9d;cursor:pointer">← חזור לצ׳אט</div>
+        <div style="font-size:9px;color:#888">דיזנגוף · 2026-04-19</div>
+      </div>
+      <div style="background:#1d3557;color:white;padding:8px 10px;border-radius:6px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700">ניתוח שוק — דיזנגוף</div>
+        <div style="font-size:8px;opacity:.7">87 עסקאות | תל אביב</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+        <div style="background:white;padding:5px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:11px;font-weight:700;color:#1d3557">₪4.2M</div><div style="font-size:8px;color:#888">ממוצע</div></div>
+        <div style="background:white;padding:5px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:11px;font-weight:700;color:#2a9d8f">↑ 4.2%</div><div style="font-size:8px;color:#888">מגמה</div></div>
+      </div>
+      <div style="background:white;border-radius:4px;border:1px solid #eee;padding:5px">
+        <div style="font-size:8px;color:#888;margin-bottom:3px">עסקאות אחרונות</div>
+        <div style="font-size:8px;color:#333;border-bottom:1px solid #f5f5f5;padding-bottom:2px;margin-bottom:2px">דיזנגוף 78 | ₪4.6M | 3 חד׳</div>
+        <div style="font-size:8px;color:#333">דיזנגוף 203 | ₪4.7M | 3 חד׳</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 5: Admin -->
+  <div class="mockup">
+    <div class="mockup-header">5 · אדמין (רק אתה)</div>
+    <div class="mockup-body" style="background:#f7f8fa;padding:10px;direction:rtl">
+      <div style="font-size:10px;font-weight:700;color:#1d3557;margin-bottom:10px">יצירת קישור ללקוח</div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:9px;color:#666;margin-bottom:3px">שם הלקוח</div>
+        <div style="background:white;border:1px solid #ddd;border-radius:6px;padding:5px 8px;font-size:9px;color:#999;direction:rtl">רוני כהן</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;padding:6px 12px;border-radius:16px;font-size:9px;text-align:center;margin-bottom:10px">✦ צור קישור</div>
+      <div style="background:#eaf2fb;border-radius:6px;padding:8px;margin-bottom:8px">
+        <div style="font-size:8px;color:#888;margin-bottom:4px">קישור ללקוח (לשלוח בWhatsApp):</div>
+        <div style="font-size:8px;color:#457b9d;word-break:break-all">nadlan.ai/auth/a7f3k2...</div>
+      </div>
+      <div style="font-size:9px;font-weight:700;color:#1d3557;margin-bottom:5px">לקוחות פעילים</div>
+      <div style="background:white;border:1px solid #eee;border-radius:6px;padding:5px 8px;display:flex;justify-content:space-between;font-size:8px">
+        <span>רוני כהן</span><span style="color:#2a9d8f">פעיל ✓</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow diagram -->
+  <div class="mockup">
+    <div class="mockup-header">Flow — מסלול המשתמש</div>
+    <div class="mockup-body" style="background:#fafafa;padding:12px;font-size:9px;direction:rtl;font-family:Arial,sans-serif">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="background:#e76f51;color:white;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0">1</div>
+          <div style="color:#333">אתה יוצר קישור → שולח ב-WhatsApp</div>
+        </div>
+        <div style="border-right:2px solid #e0e0e0;height:10px;margin-right:8px"></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="background:#457b9d;color:white;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0">2</div>
+          <div style="color:#333">לקוח לוחץ → נכנס אוטומטית</div>
+        </div>
+        <div style="border-right:2px solid #e0e0e0;height:10px;margin-right:8px"></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="background:#457b9d;color:white;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0">3</div>
+          <div style="color:#333">שואל שאלה בעברית חופשית</div>
+        </div>
+        <div style="border-right:2px solid #e0e0e0;height:10px;margin-right:8px"></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="background:#2a9d8f;color:white;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0">4</div>
+          <div style="color:#333">רואה תוצאות + פותח דוח מלא</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="background:rgba(255,255,255,0.8);border:1px solid rgba(69,123,157,0.2);border-radius:10px;padding:14px 18px;direction:rtl;font-family:Arial,sans-serif;backdrop-filter:blur(8px)">
+  <div style="font-size:11px;font-weight:700;color:#1d3557;margin-bottom:8px">📦 קבצים שייווצרו</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;color:#444">
+    <div><code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:9px">app.py</code> — Flask routes + SSE</div>
+    <div><code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:9px">db.py</code> — SQLite: users, links</div>
+    <div><code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:9px">templates/chat.html</code> — צ׳אט RTL</div>
+    <div><code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:9px">templates/admin.html</code> — יצירת links</div>
+    <div><code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:9px">templates/report.html</code> — wrapper לדוח</div>
+    <div><code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:9px">static/chat.js</code> — SSE + UI logic</div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:14px;text-align:center">נראה טוב? ← ענה בטרמינל</p>

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: hamatzpen
+    env: python
+    region: frankfurt
+    plan: starter
+    buildCommand: |
+      pip install -r requirements.txt
+      playwright install chromium
+      playwright install-deps chromium
+    startCommand: gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120 --worker-class gthread
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: NADLAN_ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: data
+      mountPath: /app/output
+      sizeGB: 1

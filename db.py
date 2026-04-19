@@ -165,6 +165,16 @@ def update_report(report_id, report_path, summary):
         db.close()
 
 
+def update_report_label(report_id, actual_label):
+    """Update the street field with the actual label used by research.py."""
+    db = get_db()
+    try:
+        db.execute("UPDATE reports SET street=? WHERE id=?", (actual_label, report_id))
+        db.commit()
+    finally:
+        db.close()
+
+
 def get_report(report_id):
     db = get_db()
     try:

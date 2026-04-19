@@ -1,0 +1,24 @@
+[
+  {
+    "DEALDATETIME": "2026-01-15T10:00:00Z",
+    "FULLADRESS": "דיזנגוף 10, תל אביב",
+    "DEALAMOUNT": 2500000,
+    "ASSETROOMNUM": 3,
+    "FLOORNO": 5,
+    "DEALNATURE": 80,
+    "BUILDINGYEAR": 1990,
+    "GUSH": 1234,
+    "HELKA": 56
+  },
+  {
+    "DEALDATETIME": "2026-02-20T14:30:00Z",
+    "FULLADRESS": "דיזנגוף 25, תל אביב",
+    "DEALAMOUNT": 1800000,
+    "ASSETROOMNUM": 2,
+    "FLOORNO": 3,
+    "DEALNATURE": 60,
+    "BUILDINGYEAR": 1985,
+    "GUSH": 1234,
+    "HELKA": 57
+  }
+]

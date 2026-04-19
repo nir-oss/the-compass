@@ -1,0 +1,139 @@
+<h2>סגנון ממשק הצ׳אט</h2>
+<p class="subtitle">אותה פונקציונליות — שלושה lookים שונים</p>
+
+<div class="cards">
+
+  <!-- Style A: Clean White / Claude-style -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#ffffff;border:1px solid #e5e5e5;font-family:-apple-system,Arial,sans-serif;direction:rtl;overflow:hidden">
+      <!-- Top nav -->
+      <div style="background:#fff;border-bottom:1px solid #f0f0f0;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:11px;font-weight:700;color:#1a1a1a">🏠 נדל״ן AI</div>
+        <div style="font-size:10px;color:#888">שלום, רוני</div>
+      </div>
+      <!-- Chat area -->
+      <div style="padding:14px;background:#fafafa">
+        <!-- AI greeting -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-start;flex-direction:row-reverse">
+          <div style="width:24px;height:24px;background:#1a1a1a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;flex-shrink:0">AI</div>
+          <div style="background:white;border:1px solid #e8e8e8;padding:8px 12px;border-radius:12px 12px 12px 0;font-size:10px;color:#1a1a1a;max-width:200px;line-height:1.5">
+            שלום! שאל אותי כל שאלה על שוק הנדל״ן בישראל
+          </div>
+        </div>
+        <!-- User message -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-start">
+          <div style="width:24px;height:24px;background:#e8e8e8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#333;flex-shrink:0">ר</div>
+          <div style="background:#1a1a1a;color:white;padding:8px 12px;border-radius:12px 12px 0 12px;font-size:10px;max-width:180px">כדאי לקנות בדיזנגוף?</div>
+        </div>
+        <!-- AI response -->
+        <div style="display:flex;gap:8px;align-items:flex-start;flex-direction:row-reverse">
+          <div style="width:24px;height:24px;background:#1a1a1a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;flex-shrink:0">AI</div>
+          <div style="background:white;border:1px solid #e8e8e8;padding:8px 12px;border-radius:12px 12px 12px 0;font-size:10px;color:#1a1a1a;max-width:200px;line-height:1.5">
+            87 עסקאות ב-2 שנים. ממוצע ₪4.2M, מגמה עולה.<br>
+            <span style="color:#555;text-decoration:underline;cursor:pointer">→ פתח דוח מלא</span>
+          </div>
+        </div>
+      </div>
+      <!-- Input -->
+      <div style="padding:10px 14px;border-top:1px solid #f0f0f0;background:white;display:flex;gap:8px">
+        <input style="flex:1;border:1px solid #e0e0e0;border-radius:20px;padding:7px 14px;font-size:10px;outline:none;text-align:right;direction:rtl" placeholder="שאל שאלה...">
+        <div style="background:#1a1a1a;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px">↑</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>א — Clean White (כמו Claude / ChatGPT)</h3>
+      <p>מינימליסטי, לבן, נקי. מרגיש כמו AI מתקדם. הדגש על התוכן בלבד.</p>
+    </div>
+  </div>
+
+  <!-- Style B: Real Estate Brand -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f7f8fa;font-family:-apple-system,Arial,sans-serif;direction:rtl;overflow:hidden">
+      <!-- Top nav with brand -->
+      <div style="background:#1d3557;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:11px;font-weight:700;color:white">🏠 PropertyAI ישראל</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.7)">רוני כהן</div>
+      </div>
+      <!-- Quick stats bar -->
+      <div style="background:#457b9d;padding:6px 16px;display:flex;gap:16px">
+        <span style="font-size:9px;color:white;opacity:0.9">תל אביב</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.5)">|</span>
+        <span style="font-size:9px;color:white;opacity:0.9">₪65K/מ״ר ממוצע</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.5)">|</span>
+        <span style="font-size:9px;color:#64ffda">שוק עולה ↑</span>
+      </div>
+      <!-- Chat -->
+      <div style="padding:12px">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-direction:row-reverse">
+          <div style="width:22px;height:22px;background:#1d3557;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;flex-shrink:0">AI</div>
+          <div style="background:white;border:1px solid #e0eaf5;padding:8px 10px;border-radius:10px 10px 10px 2px;font-size:10px;color:#1a1a1a;max-width:190px;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+            שלום! אני מנתח נתוני עסקאות בזמן אמת. על מה תרצה לדעת?
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="width:22px;height:22px;background:#457b9d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;flex-shrink:0">ר</div>
+          <div style="background:#1d3557;color:white;padding:8px 10px;border-radius:10px 10px 2px 10px;font-size:10px;max-width:170px">כדאי לקנות בדיזנגוף?</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-direction:row-reverse">
+          <div style="width:22px;height:22px;background:#1d3557;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;flex-shrink:0">AI</div>
+          <div style="background:white;border:1px solid #e0eaf5;padding:8px 10px;border-radius:10px 10px 10px 2px;font-size:10px;color:#1a1a1a;max-width:190px;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+            87 עסקאות, ממוצע ₪4.2M, מגמה עולה 4.2%.<br>
+            <span style="display:inline-block;margin-top:4px;background:#1d3557;color:white;padding:3px 8px;border-radius:4px;font-size:9px">📊 פתח דוח מלא</span>
+          </div>
+        </div>
+      </div>
+      <!-- Input -->
+      <div style="padding:8px 12px;border-top:1px solid #e5eef7;background:white;display:flex;gap:8px">
+        <input style="flex:1;border:1.5px solid #457b9d;border-radius:8px;padding:6px 12px;font-size:10px;outline:none;direction:rtl;text-align:right" placeholder="שאל שאלה...">
+        <div style="background:#1d3557;color:white;padding:6px 12px;border-radius:8px;font-size:10px">שלח</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>ב — Real Estate Brand (כמו מדלן premium)</h3>
+      <p>כחול כהה + לבן. מרגיש מקצועי ואמין. פס עליון עם נתוני שוק. מותג ברור.</p>
+    </div>
+  </div>
+
+  <!-- Style C: Warm / Modern -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:linear-gradient(135deg,#fff8f0 0%,#f0f4ff 100%);font-family:-apple-system,Arial,sans-serif;direction:rtl;overflow:hidden">
+      <!-- Nav -->
+      <div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.8);backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,0,0,.06)">
+        <div style="font-size:11px;font-weight:800;background:linear-gradient(135deg,#e76f51,#457b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Nadlan AI</div>
+        <div style="font-size:10px;color:#888">רוני ✦</div>
+      </div>
+      <!-- Chat -->
+      <div style="padding:12px">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-direction:row-reverse">
+          <div style="width:22px;height:22px;background:linear-gradient(135deg,#457b9d,#2a9d8f);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;flex-shrink:0">AI</div>
+          <div style="background:rgba(255,255,255,0.95);border:1px solid rgba(0,0,0,.08);padding:8px 10px;border-radius:12px 12px 12px 2px;font-size:10px;color:#1a1a1a;max-width:190px;line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+            שלום 👋 שאל אותי על כל אזור בישראל — מחירים, מגמות, השוואות
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="width:22px;height:22px;background:#e76f51;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;flex-shrink:0">ר</div>
+          <div style="background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;padding:8px 10px;border-radius:12px 12px 2px 12px;font-size:10px;max-width:170px">כדאי לקנות בדיזנגוף?</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-direction:row-reverse">
+          <div style="width:22px;height:22px;background:linear-gradient(135deg,#457b9d,#2a9d8f);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;flex-shrink:0">AI</div>
+          <div style="background:rgba(255,255,255,0.95);border:1px solid rgba(0,0,0,.08);padding:8px 10px;border-radius:12px 12px 12px 2px;font-size:10px;color:#1a1a1a;max-width:190px;line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+            87 עסקאות, ממוצע ₪4.2M 📈<br>
+            <span style="display:inline-block;margin-top:5px;background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;padding:3px 10px;border-radius:20px;font-size:9px">פתח דוח מלא →</span>
+          </div>
+        </div>
+      </div>
+      <!-- Input -->
+      <div style="padding:8px 12px;display:flex;gap:8px">
+        <input style="flex:1;border:none;background:rgba(255,255,255,0.9);border-radius:20px;padding:8px 14px;font-size:10px;outline:none;direction:rtl;text-align:right;box-shadow:0 2px 8px rgba(0,0,0,.08)" placeholder="שאל שאלה...">
+        <div style="background:linear-gradient(135deg,#457b9d,#2a9d8f);color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px">↑</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>ג — Modern Warm (כמו Perplexity / Linear)</h3>
+      <p>גרדיאנט, עגול, חם. מרגיש כמו סטארטאפ מודרני. פחות corporate, יותר friendly.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:12px;text-align:center">לחץ על הסגנון המועדף → ענה בטרמינל</p>
