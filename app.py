@@ -110,7 +110,7 @@ def run_research(question, session_id):
 
     # Find the most-recently generated HTML report
     html_files = sorted(
-        glob.glob(f"output/report_{label}*.html"), key=os.path.getmtime, reverse=True
+        glob.glob(f"output/report_{glob.escape(label)}*.html"), key=os.path.getmtime, reverse=True
     )
     if not html_files:
         html_files = sorted(glob.glob("output/report_*.html"), key=os.path.getmtime, reverse=True)
@@ -125,7 +125,8 @@ def run_research(question, session_id):
             yield _sse({"step": "summarizing", "text": "⟳ מכין סיכום..."})
             summary = generate_summary(stats, question)
         except Exception:
-            pass
+            import traceback
+            traceback.print_exc()
 
     if report_path:
         db.update_report(report_id, report_path, summary)
@@ -171,7 +172,13 @@ def create_app(config=None):
             return render_template("auth.html", error=True), 401
         session_token = db.create_session(user_id)
         resp = redirect("/")
-        resp.set_cookie("nadlan_session", session_token, max_age=7 * 86400, httponly=True)
+        resp.set_cookie(
+            "nadlan_session", session_token,
+            max_age=7 * 86400,
+            httponly=True,
+            samesite="Lax",
+            secure=not app.debug,
+        )
         return resp
 
     @app.route("/")
@@ -231,7 +238,11 @@ def create_app(config=None):
         path = Path(report["report_path"])
         if not path.exists():
             abort(404)
-        return send_file(str(path.resolve()), mimetype="text/html")
+        output_dir = Path("output").resolve()
+        resolved = path.resolve()
+        if not str(resolved).startswith(str(output_dir)):
+            abort(403)
+        return send_file(str(resolved), mimetype="text/html")
 
     @app.route("/admin/login", methods=["GET", "POST"])
     def admin_login():
