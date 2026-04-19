@@ -44,6 +44,16 @@ class TestAuth:
         resp = client.get("/")
         assert resp.status_code == 200
 
+    def test_auth_error_returns_401(self, client):
+        resp = client.get("/auth-error")
+        assert resp.status_code == 401
+
+    def test_valid_magic_link_sets_cookie(self, client):
+        uid = db.create_user("רוני")
+        token = db.create_magic_link(uid)
+        resp = client.get(f"/auth/{token}")
+        assert "nadlan_session" in resp.headers.get("Set-Cookie", "")
+
 
 class TestAdmin:
     def test_admin_requires_login(self, client):
@@ -71,6 +81,16 @@ class TestAdmin:
         data = resp.get_json()
         assert "link" in data and "auth/" in data["link"]
 
+    def test_admin_with_session_returns_200(self, app, client):
+        client.post("/admin/login", data={"password": app.config["ADMIN_PASSWORD"]})
+        resp = client.get("/admin")
+        assert resp.status_code == 200
+
+    def test_create_link_empty_name_returns_400(self, app, client):
+        client.post("/admin/login", data={"password": app.config["ADMIN_PASSWORD"]})
+        resp = client.post("/admin/create-link", data={"name": ""})
+        assert resp.status_code == 400
+
 
 class TestAsk:
     def test_ask_without_session_redirects(self, client):
@@ -87,4 +107,17 @@ class TestReport:
     def test_report_404_for_unknown_id(self, client):
         _login_client(client)
         resp = client.get("/report/9999")
+        assert resp.status_code == 404
+
+    def test_report_without_session_redirects(self, client):
+        resp = client.get("/report/1")
+        assert resp.status_code == 302
+
+    def test_report_file_without_session_returns_401(self, client):
+        resp = client.get("/report/1/file")
+        assert resp.status_code == 401
+
+    def test_report_file_not_found_returns_404(self, client):
+        _login_client(client)
+        resp = client.get("/report/9999/file")
         assert resp.status_code == 404
