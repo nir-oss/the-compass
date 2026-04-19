@@ -157,7 +157,13 @@ def generate_html(stats, output_dir="output", street=None):
     trends  = stats.get("trends", {})
     by_rooms = prices.get("by_rooms", {})
 
-    title     = street or meta.get("settlement", "אזור")
+    settlement = meta.get("settlement", "")
+    if street and settlement:
+        title = f"{street}, {settlement}"
+    elif settlement:
+        title = settlement
+    else:
+        title = street or "אזור"
     today     = date.today().isoformat()
     direction = trends.get("direction", "stable")
     total     = meta.get("total_deals", 0)

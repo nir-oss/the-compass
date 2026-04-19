@@ -2,8 +2,12 @@ import glob
 import json
 import os
 import subprocess
+import warnings
+import urllib3
 from functools import wraps
 from pathlib import Path
+
+warnings.filterwarnings("ignore", category=urllib3.exceptions.NotOpenSSLWarning)
 
 from flask import (
     Flask, Response, abort, redirect, render_template,
@@ -23,13 +27,21 @@ def parse_question(question):
         messages=[{
             "role": "user",
             "content": (
-                "חלץ מהשאלה שם יישוב ושם רחוב בישראל. "
-                'החזר JSON בלבד: {"settlement":"...","street":"..." or null}\n\n'
-                f"שאלה: {question}"
+                "אתה מנתח שאלות על נדל\"ן בישראל. חלץ מהשאלה שם יישוב ושם רחוב. "
+                "החזר JSON בלבד ללא הסבר: {\"settlement\": \"שם הישוב\", \"street\": \"שם הרחוב או null\"}\n"
+                "אם השאלה לא מכילה ישוב ישראלי מזוהה, החזר: {\"settlement\": null, \"street\": null}\n"
+                "דוגמאות: 'מה המחיר ברחוב הרצל תל אביב' → {\"settlement\": \"תל אביב\", \"street\": \"הרצל\"}\n"
+                "שאלה: " + question
             ),
         }],
     )
-    return json.loads(msg.content[0].text)
+    text = msg.content[0].text.strip()
+    # Strip markdown code fences if Claude wrapped the JSON
+    if text.startswith("```"):
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+    return json.loads(text.strip())
 
 
 def generate_summary(stats, question):
@@ -78,24 +90,33 @@ def run_research(question, session_id):
         yield _sse({"step": "error", "text": "לא זיהיתי עיר — נסה לציין עיר ספציפית.", "done": True})
         return
 
+    # Validate settlement looks like an Israeli place name (not food/random words)
+    suspicious_words = {"מנגו", "תפוח", "בננה", "pizza", "burger", "test", "טסט"}
+    if settlement.lower() in suspicious_words or (len(settlement) < 2):
+        yield _sse({"step": "error", "text": f"לא זיהיתי כתובת תקינה בשאלה שלך. נסה לכתוב למשל: 'מה המחירים ברחוב הרצל תל אביב'", "done": True})
+        return
+
     yield _sse({"step": "parsed", "text": f"✓ זיהיתי: {settlement}{', ' + street if street else ''}"})
 
     report_id = db.create_report(session_id, question, settlement, street)
 
-    cmd = ["python3", "research.py", "--settlement", settlement, "--limit", "150"]
+    project_dir = Path(__file__).parent
+    cmd = ["python3", str(project_dir / "research.py"), "--settlement", settlement, "--limit", "150"]
     if street:
         cmd += ["--street", street]
 
     yield _sse({"step": "fetching", "text": "⟳ מושך עסקאות מנדל״ן.gov.il..."})
 
+    output_lines = []
     try:
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, encoding="utf-8",
+            text=True, encoding="utf-8", cwd=str(project_dir),
         )
         for line in proc.stdout:
             line = line.strip()
-            if line and not line.startswith("  →"):
+            output_lines.append(line)
+            if line and not line.startswith("  →") and "NotOpenSSLWarning" not in line and "warnings.warn" not in line and "urllib3" not in line:
                 yield _sse({"step": "progress", "text": line})
         proc.wait()
     except Exception as e:
@@ -103,7 +124,8 @@ def run_research(question, session_id):
         return
 
     if proc.returncode != 0:
-        yield _sse({"step": "error", "text": "הרצת הניתוח נכשלה. נסה שוב.", "done": True})
+        error_detail = " | ".join(output_lines[-5:]) if output_lines else "אין פלט"
+        yield _sse({"step": "error", "text": f"הרצת הניתוח נכשלה: {error_detail}", "done": True})
         return
 
     yield _sse({"step": "analyzing", "text": "⟳ מנתח נתונים..."})
@@ -184,9 +206,14 @@ def create_app(config=None):
     @app.route("/")
     def chat():
         token = request.cookies.get("nadlan_session")
-        if not db.validate_session(token):
+        user_id = db.validate_session(token)
+        if not user_id:
             return redirect(url_for("auth_error"))
-        return render_template("chat.html")
+        conn = db.get_db()
+        user = conn.execute("SELECT name FROM users WHERE id=?", (user_id,)).fetchone()
+        conn.close()
+        user_name = user["name"] if user else ""
+        return render_template("chat.html", user_name=user_name)
 
     @app.route("/auth-error")
     def auth_error():
@@ -272,4 +299,5 @@ def create_app(config=None):
 
 
 if __name__ == "__main__":
-    create_app().run(debug=True, host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 9000))
+    create_app().run(debug=True, host="0.0.0.0", port=port)

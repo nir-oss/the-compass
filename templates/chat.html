@@ -4,6 +4,7 @@
 <div class="app-layout">
   <nav class="top-nav">
     <span class="brand-text">Nadlan AI</span>
+    {% if user_name %}<span class="user-name">שלום, {{ user_name }}</span>{% endif %}
   </nav>
   <div class="chat-container" id="chat-container">
     <div class="bubble bot">
