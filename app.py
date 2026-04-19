@@ -240,7 +240,7 @@ def create_app(config=None):
             abort(404)
         output_dir = Path("output").resolve()
         resolved = path.resolve()
-        if not str(resolved).startswith(str(output_dir)):
+        if not resolved.is_relative_to(output_dir):
             abort(403)
         return send_file(str(resolved), mimetype="text/html")
 
