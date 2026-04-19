@@ -39,6 +39,10 @@ async function createLink(e) {
   const fd = new FormData();
   fd.append('name', name);
   const resp = await fetch('/admin/create-link', {method: 'POST', body: fd});
+  if (!resp.ok) {
+    alert('שגיאה ביצירת הקישור — נסה שוב');
+    return;
+  }
   const data = await resp.json();
   document.getElementById('link-value').textContent = data.link;
   document.getElementById('link-result').style.display = 'block';
