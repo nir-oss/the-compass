@@ -72,14 +72,28 @@ def _build_body(base_id, base_name: str, recaptcha_token: str,
 # ─── Lookup: settlements & streets ───────────────────────────────────────────
 
 def lookup_settlement(name: str) -> Optional[int]:
-    """Find settlement ID by name (partial match)."""
+    """Find settlement ID by name (partial match, then fuzzy fallback)."""
     r = _req.get(f"{DATA_BASE}/index/setl_types.json",
                  headers={"Referer": "https://www.nadlan.gov.il/"}, timeout=15)
     r.raise_for_status()
+    data = r.json()
     name_lower = name.lower()
-    for sid, info in r.json().items():
+
+    # Exact substring match first
+    for sid, info in data.items():
         if name_lower in info.get("SETL_NAME", "").lower():
             return int(sid)
+
+    # Fuzzy fallback: ignore yud doublings (הרצליה ↔ הרצלייה) and similar
+    import difflib
+    candidates = {sid: info.get("SETL_NAME", "") for sid, info in data.items()}
+    names = list(candidates.values())
+    matches = difflib.get_close_matches(name, names, n=1, cutoff=0.75)
+    if matches:
+        for sid, n in candidates.items():
+            if n == matches[0]:
+                return int(sid)
+
     return None
 
 
@@ -111,12 +125,12 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
         try:
             browser = await p.chromium.launch(
                 channel="chrome",
-                headless=False,
+                headless=True,
                 args=["--disable-blink-features=AutomationControlled"],
             )
         except Exception:
             browser = await p.chromium.launch(
-                headless=False,
+                headless=True,
                 args=["--disable-blink-features=AutomationControlled"],
             )
 
@@ -140,9 +154,10 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
             token = await page.evaluate("sessionStorage.getItem('recaptchaServerToken')")
             if token:
                 token = token.strip().strip('"')
-                print(f"  Token obtained after {i + 1}s!")
-                token_holder.append(token)
-                break
+                if token and token not in ("null", "None", "undefined"):
+                    print(f"  Token obtained after {i + 1}s!")
+                    token_holder.append(token)
+                    break
             if i % 10 == 9:
                 print(f"  Still waiting... ({i + 1}s)", flush=True)
 

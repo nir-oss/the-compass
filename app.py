@@ -15,7 +15,11 @@ from flask import (
 )
 from anthropic import Anthropic
 
+import threading
+
 import db
+
+_research_lock = threading.Semaphore(1)
 
 
 def parse_question(question):
@@ -107,21 +111,35 @@ def run_research(question, session_id):
 
     yield _sse({"step": "fetching", "text": "⟳ מושך עסקאות מנדל״ן.gov.il..."})
 
+    acquired = _research_lock.acquire(blocking=True, timeout=5)
+    if not acquired:
+        yield _sse({"step": "error", "text": "המערכת עמוסה כרגע — נסה שוב בעוד כמה שניות.", "done": True})
+        return
+
     output_lines = []
+    proc = None
     try:
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", cwd=str(project_dir),
         )
-        for line in proc.stdout:
+        try:
+            stdout_data, _ = proc.communicate(timeout=90)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            yield _sse({"step": "error", "text": "הבקשה ארכה יותר מדי (90 שניות) — נסה שנית.", "done": True})
+            return
+        for line in stdout_data.splitlines():
             line = line.strip()
             output_lines.append(line)
             if line and not line.startswith("  →") and "NotOpenSSLWarning" not in line and "warnings.warn" not in line and "urllib3" not in line:
                 yield _sse({"step": "progress", "text": line})
-        proc.wait()
     except Exception as e:
         yield _sse({"step": "error", "text": f"שגיאה: {e}", "done": True})
         return
+    finally:
+        _research_lock.release()
 
     if proc.returncode != 0:
         error_detail = " | ".join(output_lines[-5:]) if output_lines else "אין פלט"
