@@ -156,3 +156,5 @@ body {
   padding: 10px 14px; font-size: .95em; direction: rtl; outline: none;
 }
 .form-error { color: #e76f51; font-size: .88em; }
+
+.summary-text { margin-bottom: 8px; display: block; }

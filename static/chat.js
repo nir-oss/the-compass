@@ -9,7 +9,7 @@ function appendBubble(role, content) {
 
   const msg = document.createElement('div');
   msg.className = 'message';
-  msg.innerHTML = content;
+  if (content) msg.textContent = content;
 
   div.appendChild(avatar);
   div.appendChild(msg);
@@ -22,27 +22,46 @@ function handleEvent(event, bubble) {
   const msgEl = bubble.querySelector('.message');
 
   if (event.step === 'error') {
-    msgEl.innerHTML = `<span class="error-text">${event.text}</span>`;
+    const span = document.createElement('span');
+    span.className = 'error-text';
+    span.textContent = event.text || 'שגיאה';
+    msgEl.textContent = '';
+    msgEl.appendChild(span);
     return;
   }
 
   if (event.done) {
-    let html = '';
+    msgEl.textContent = '';
     if (event.summary) {
-      html += `<p style="margin-bottom:8px">${event.summary}</p>`;
+      const p = document.createElement('p');
+      p.className = 'summary-text';
+      p.textContent = event.summary;
+      msgEl.appendChild(p);
     }
     if (event.report_id) {
-      html += `<a href="/report/${event.report_id}" class="report-btn">📊 פתח דוח מלא</a>`;
+      const a = document.createElement('a');
+      a.href = `/report/${Number(event.report_id)}`;
+      a.className = 'report-btn';
+      a.textContent = '📊 פתח דוח מלא';
+      msgEl.appendChild(a);
     }
-    msgEl.innerHTML = html || event.text;
+    if (!event.summary && !event.report_id) {
+      msgEl.textContent = event.text || '';
+    }
     return;
   }
 
   // Append progress line
-  const existing = msgEl.innerHTML;
-  const line = `<span class="${event.step}">${event.text}</span>`;
-  msgEl.innerHTML = existing ? existing + '\n' + line : line;
-  bubble.parentElement.scrollTop = bubble.parentElement.scrollHeight;
+  if (msgEl.childNodes.length > 0) {
+    msgEl.appendChild(document.createTextNode('\n'));
+  }
+  const span = document.createElement('span');
+  span.className = event.step || 'progress';
+  span.textContent = event.text || '';
+  msgEl.appendChild(span);
+
+  const container = bubble.parentElement;
+  if (container) container.scrollTop = container.scrollHeight;
 }
 
 async function sendQuestion() {
@@ -57,6 +76,8 @@ async function sendQuestion() {
   appendBubble('user', question);
   const botBubble = appendBubble('bot', '');
 
+  let reader = null;
+
   try {
     const resp = await fetch('/ask', {
       method: 'POST',
@@ -65,19 +86,32 @@ async function sendQuestion() {
     });
 
     if (!resp.ok) {
-      botBubble.querySelector('.message').innerHTML =
-        '<span class="error-text">שגיאה — נסה שוב</span>';
+      resp.body.cancel();
+      const span = document.createElement('span');
+      span.className = 'error-text';
+      span.textContent = 'שגיאה — נסה שוב';
+      botBubble.querySelector('.message').appendChild(span);
       return;
     }
 
-    const reader = resp.body.getReader();
+    reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+
+      if (value) {
+        buffer += decoder.decode(value, { stream: true });
+      }
+
+      if (done) {
+        // Flush remaining buffer
+        if (buffer.startsWith('data: ')) {
+          try { handleEvent(JSON.parse(buffer.slice(6)), botBubble); } catch (_) {}
+        }
+        break;
+      }
 
       const lines = buffer.split('\n');
       buffer = lines.pop();
@@ -91,8 +125,15 @@ async function sendQuestion() {
       }
     }
   } catch (e) {
-    botBubble.querySelector('.message').innerHTML =
-      '<span class="error-text">שגיאת חיבור — נסה שוב</span>';
+    if (reader) {
+      try { await reader.cancel(); } catch (_) {}
+    }
+    const span = document.createElement('span');
+    span.className = 'error-text';
+    span.textContent = 'שגיאת חיבור — נסה שוב';
+    const msgEl = botBubble.querySelector('.message');
+    msgEl.textContent = '';
+    msgEl.appendChild(span);
   } finally {
     input.disabled = false;
     document.getElementById('send-btn').disabled = false;
