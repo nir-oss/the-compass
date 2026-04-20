@@ -189,16 +189,17 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
             "--disable-blink-features=AutomationControlled",
             "--no-sandbox",
             "--disable-dev-shm-usage",
+            "--disable-gpu",
         ]
         try:
             browser = await p.chromium.launch(
                 channel="chrome",
-                headless=False,
+                headless=True,
                 args=common_args,
             )
         except Exception:
             browser = await p.chromium.launch(
-                headless=False,
+                headless=True,
                 args=common_args,
             )
 
