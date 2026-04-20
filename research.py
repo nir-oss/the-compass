@@ -17,6 +17,7 @@ import asyncio
 import json
 import sys
 import webbrowser
+import os
 from pathlib import Path
 
 from nadlan_scraper import (
@@ -29,7 +30,7 @@ from nadlan_scraper import (
 from analyze import analyze
 from report import generate_html
 
-OUTPUT_DIR = "output"
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", str(Path(__file__).parent / "output"))
 
 
 def _save_json(data, path):

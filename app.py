@@ -31,6 +31,9 @@ import threading
 
 import db
 
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", str(Path(__file__).parent / "output"))
+Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 _research_lock = threading.Semaphore(1)
@@ -340,7 +343,7 @@ def run_research(question, session_id, pre_settlement=None,
     # Resolve the actual label that research.py used (may differ from user input
     # e.g. "רובע טו" → "רובע ט\"ו" after neighborhood lookup)
     actual_label = label
-    analysis_files = sorted(glob.glob("output/analysis_*.json"), key=os.path.getmtime, reverse=True)
+    analysis_files = sorted(glob.glob(f"{OUTPUT_DIR}/analysis_*.json"), key=os.path.getmtime, reverse=True)
     if analysis_files:
         newest_stem = Path(analysis_files[0]).stem  # "analysis_רובע ט\"ו"
         actual_label = newest_stem[len("analysis_"):]  # strip prefix
@@ -349,13 +352,13 @@ def run_research(question, session_id, pre_settlement=None,
     db.update_report_label(report_id, actual_label)
 
     # Find the most-recently generated HTML report
-    html_files = sorted(glob.glob("output/report_*.html"), key=os.path.getmtime, reverse=True)
+    html_files = sorted(glob.glob(f"{OUTPUT_DIR}/report_*.html"), key=os.path.getmtime, reverse=True)
     report_path = html_files[0] if html_files else None
 
     # Generate Hebrew summary from analysis JSON
     summary = ""
     total_deals = 0
-    analysis_path = Path(f"output/analysis_{actual_label}.json")
+    analysis_path = Path(OUTPUT_DIR) / f"analysis_{actual_label}.json"
     if analysis_path.exists():
         try:
             stats = json.loads(analysis_path.read_text(encoding="utf-8"))
@@ -478,7 +481,7 @@ def create_app(config=None):
         if not report:
             abort(404)
         label = report.get("street") or report.get("settlement", "")
-        raw_path = Path("output") / f"deals_raw_{label}.json"
+        raw_path = Path(OUTPUT_DIR) / f"deals_raw_{label}.json"
         if not raw_path.exists():
             return {"deals": [], "total": 0}
         deals_raw = json.loads(raw_path.read_text(encoding="utf-8"))
@@ -513,7 +516,7 @@ def create_app(config=None):
         path = Path(report["report_path"])
         if not path.exists():
             abort(404)
-        output_dir = Path("output").resolve()
+        output_dir = Path(OUTPUT_DIR).resolve()
         resolved = path.resolve()
         if not resolved.is_relative_to(output_dir):
             abort(403)

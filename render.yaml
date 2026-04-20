@@ -16,6 +16,9 @@ services:
         generateValue: true
       - key: NADLAN_ADMIN_PASSWORD
         sync: false
+    envVars:
+      - key: OUTPUT_DIR
+        value: /app/output
     disk:
       name: data
       mountPath: /app/output
