@@ -453,10 +453,6 @@ def create_app(config=None):
     db.init_db()
     limiter.init_app(app)
 
-    # Start background reCAPTCHA token refresh (headless Playwright)
-    import token_cache
-    token_cache.start(settlement_id=5000)
-
     # Start background odata.org.il DB build (local SQLite for 20 major cities)
     import odata_db
     odata_db.start()
