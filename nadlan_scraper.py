@@ -184,7 +184,8 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
 
     token_holder = []
 
-    async with async_playwright() as p:
+    try:
+      async with async_playwright() as p:
         common_args = [
             "--disable-blink-features=AutomationControlled",
             "--no-sandbox",
@@ -235,6 +236,9 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
                 print(f"  Still waiting... ({i + 1}s)", flush=True)
 
         await browser.close()
+
+    except Exception as e:
+        print(f"  Playwright error: {e}", flush=True)
 
     return token_holder[0] if token_holder else None
 

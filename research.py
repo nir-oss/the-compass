@@ -100,7 +100,11 @@ def run(settlement_name, street_name=None, neighborhood_name=None,
             print(f"משתמש ב-token מהcache.")
         else:
             print("מושך token חדש (headless)...")
-            token = asyncio.run(get_recaptcha_token(settlement_id))
+            try:
+                token = asyncio.run(get_recaptcha_token(settlement_id))
+            except Exception as e:
+                print(f"Playwright error: {e}")
+                token = None
             if not token:
                 print(f"NEEDS_TOKEN:{json.dumps({'settlement_id': settlement_id, 'settlement_name': settlement_name}, ensure_ascii=False)}")
                 sys.exit(2)
