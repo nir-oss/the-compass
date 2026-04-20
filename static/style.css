@@ -396,6 +396,42 @@ body {
 /* ── Error ── */
 .error-text { color: var(--red); font-weight: 500; }
 
+/* ── Token card (manual reCAPTCHA flow) ── */
+.token-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.token-card-title { font-weight: 600; font-size: 0.93rem; margin: 0 0 4px; }
+.token-card-desc { margin: 0 0 10px; opacity: 0.7; }
+.token-card-steps { margin: 0 0 12px; padding-right: 20px; }
+.token-card-steps li { margin-bottom: 4px; }
+.token-link { color: var(--gold); text-decoration: underline; }
+.token-card code {
+  font-size: 0.78rem;
+  background: rgba(0,0,0,0.07);
+  padding: 1px 5px;
+  border-radius: 4px;
+  direction: ltr;
+  display: inline-block;
+}
+.token-input-row { display: flex; gap: 8px; margin-top: 8px; }
+.token-input {
+  flex: 1; min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  background: var(--bg);
+  color: var(--text);
+  direction: ltr;
+}
+.token-input:focus { outline: none; border-color: var(--gold); }
+.token-submit-btn { white-space: nowrap; }
+
 /* ── Result buttons ── */
 .result-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 

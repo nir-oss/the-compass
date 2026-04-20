@@ -172,10 +172,10 @@ def _sse(data):
 
 
 def run_research(question, session_id, pre_settlement=None,
-                 pre_neighborhood=None,
+                 pre_neighborhood=None, pre_street=None,
                  pre_rooms=None, pre_property_type=None, no_more_clarify=False,
                  pre_min_year=None, no_year_clarify=False,
-                 last_settlement=None):
+                 last_settlement=None, pre_token=None):
     """SSE generator: [clarify location?] → [clarify rooms?] → fetch → analyze → done."""
 
     if pre_settlement:
@@ -188,7 +188,7 @@ def run_research(question, session_id, pre_settlement=None,
         except Exception as e:
             yield _sse({"step": "error", "text": f"לא הצלחתי לזהות: {e}", "done": True})
             return
-        street = refined.get("street") or ""
+        street = pre_street or refined.get("street") or ""
         neighborhood = refined.get("neighborhood") or pre_neighborhood or ""
         # Allow refinement to also specify rooms/type if not pre-set
         if not rooms:
@@ -299,6 +299,8 @@ def run_research(question, session_id, pre_settlement=None,
         cmd += ["--max-price", str(int(max_price))]
     if pre_min_year:
         cmd += ["--min-year", str(int(pre_min_year))]
+    if pre_token:
+        cmd += ["--token", pre_token]
 
     # Signal loading (single event — client shows spinner, not verbose progress)
     yield _sse({"step": "loading", "text": "מעבד..."})
@@ -340,6 +342,33 @@ def run_research(question, session_id, pre_settlement=None,
             proc.returncode, cmd,
             "\n".join(output_lines[-30:])
         )
+
+        # Exit code 2 = NEEDS_TOKEN — no reCAPTCHA token available
+        if proc.returncode == 2:
+            needs_data = {}
+            for line in output_lines:
+                if line.startswith("NEEDS_TOKEN:"):
+                    try:
+                        needs_data = json.loads(line[len("NEEDS_TOKEN:"):])
+                    except Exception:
+                        pass
+                    break
+            sid = needs_data.get("settlement_id", 5000)
+            yield _sse({
+                "step": "needs_token",
+                "settlement_id": sid,
+                "settlement_name": needs_data.get("settlement_name", settlement),
+                "url": f"https://www.nadlan.gov.il/?view=settlement&id={sid}&page=deals",
+                "settlement": settlement,
+                "street": street,
+                "neighborhood": neighborhood,
+                "rooms": rooms or None,
+                "property_type": property_type or None,
+                "min_year": pre_min_year,
+                "done": True,
+            })
+            return
+
         # Check if it's a "no deals" situation vs real failure
         last_lines = " ".join(output_lines[-10:])
         if "אין עסקאות" in last_lines or "0 deals" in last_lines or "נמצאו 0" in last_lines:
@@ -462,6 +491,8 @@ def create_app(config=None):
         pre_min_year = data.get("min_year") or None
         no_year_clarify = bool(data.get("no_year_clarify", False))
         last_settlement = (data.get("last_settlement") or "").strip() or None
+        pre_token = (data.get("token") or "").strip() or None
+        pre_street = (data.get("street") or "").strip() or None
         if not question:
             return {"error": "שאלה ריקה"}, 400
 
@@ -478,6 +509,8 @@ def create_app(config=None):
                 pre_min_year=int(pre_min_year) if pre_min_year else None,
                 no_year_clarify=no_year_clarify,
                 last_settlement=last_settlement,
+                pre_token=pre_token,
+                pre_street=pre_street,
             )),
             content_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},

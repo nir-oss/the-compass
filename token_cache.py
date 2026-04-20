@@ -82,20 +82,15 @@ async def _fetch_headless(settlement_id: int) -> Optional[str]:
                 ),
             )
             page = await context.new_page()
-            # Apply stealth patches to hide automation fingerprint
-            try:
-                from playwright_stealth import stealth_async
-                await stealth_async(page)
-            except ImportError:
-                await page.add_init_script(
-                    "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
-                )
+            await page.add_init_script(
+                "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+            )
 
             url = f"https://www.nadlan.gov.il/?view=settlement&id={settlement_id}&page=deals"
             print(f"[token_cache] Loading {url} ...")
             await page.goto(url, wait_until="domcontentloaded", timeout=45_000)
 
-            for i in range(60):
+            for i in range(45):
                 await page.wait_for_timeout(1_000)
                 token = await page.evaluate("sessionStorage.getItem('recaptchaServerToken')")
                 if token:

@@ -102,13 +102,8 @@ def run(settlement_name, street_name=None, neighborhood_name=None,
             print("מושך token חדש (headless)...")
             token = asyncio.run(get_recaptcha_token(settlement_id))
             if not token:
-                print("\n⚠ לא הצלחתי לקבל token אוטומטית.")
-                print("הוצאה ידנית:")
-                print(f"  1. פתח Chrome → https://www.nadlan.gov.il/?view=settlement&id={settlement_id}&page=deals")
-                print("  2. המתן 15 שניות")
-                print("  3. DevTools (F12) → Console → sessionStorage.getItem('recaptchaServerToken')")
-                print(f"  4. python3 research.py --settlement \"{settlement_name}\" --token \"PASTE_HERE\"")
-                sys.exit(1)
+                print(f"NEEDS_TOKEN:{json.dumps({'settlement_id': settlement_id, 'settlement_name': settlement_name}, ensure_ascii=False)}")
+                sys.exit(2)
         print(f"  Token: {token[:40]}...")
 
     # 4. Fetch

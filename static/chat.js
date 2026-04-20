@@ -309,10 +309,55 @@ function handleEvent(event, bubble, questionText) {
   const msgEl = bubble.querySelector('.message');
 
   // Only remove the compass loader when we have actual content to show
-  const contentSteps = ['done', 'error', 'clarify', 'clarify_rooms', 'clarify_years'];
+  const contentSteps = ['done', 'error', 'clarify', 'clarify_rooms', 'clarify_years', 'needs_token'];
   if (contentSteps.includes(event.step)) {
     const loader = bubble.querySelector('.compass-loader');
     if (loader) loader.remove();
+  }
+
+  if (event.step === 'needs_token') {
+    msgEl.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'token-card';
+    card.innerHTML = `
+      <p class="token-card-title">נדרש אישור reCAPTCHA</p>
+      <p class="token-card-desc">Google חוסם קבלת token אוטומטית מהשרת. עליך לספק אותו ידנית:</p>
+      <ol class="token-card-steps">
+        <li><a href="${event.url}" target="_blank" rel="noopener" class="token-link">פתח את nadlan.gov.il ↗</a> והמתן 20 שניות</li>
+        <li>לחץ F12 → Console</li>
+        <li>הקלד: <code dir="ltr">sessionStorage.getItem('recaptchaServerToken')</code></li>
+        <li>העתק את הערך (ללא גרשיים)</li>
+      </ol>
+      <div class="token-input-row">
+        <input type="text" class="token-input" placeholder="הדבק token כאן..." dir="ltr" autocomplete="off" />
+        <button class="chip token-submit-btn">שלח</button>
+      </div>
+    `;
+    msgEl.appendChild(card);
+
+    const tokenInput = card.querySelector('.token-input');
+    const tokenSubmit = card.querySelector('.token-submit-btn');
+
+    const submitToken = () => {
+      const val = tokenInput.value.trim();
+      if (!val) { tokenInput.focus(); return; }
+      tokenSubmit.disabled = true;
+      tokenInput.disabled = true;
+      sendQuestion(questionText, event.settlement, {
+        no_more_clarify: true,
+        no_year_clarify: true,
+        street: event.street || '',
+        neighborhood: event.neighborhood || '',
+        rooms: event.rooms || null,
+        property_type: event.property_type || null,
+        min_year: event.min_year || null,
+        token: val,
+      });
+    };
+
+    tokenSubmit.addEventListener('click', submitToken);
+    tokenInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitToken(); });
+    return;
   }
 
   if (event.step === 'error') {
@@ -533,6 +578,8 @@ async function sendQuestion(overrideText, overrideSettlement, extraBody) {
   if (noMoreClarify) body.no_more_clarify = true;
   if (noYearClarify) body.no_year_clarify = true;
   if (minYear) body.min_year = minYear;
+  if (extraBody && extraBody.token) body.token = extraBody.token;
+  if (extraBody && extraBody.street) body.street = extraBody.street;
   // Pass last known settlement for context-aware parsing
   const lastSettlement = getLastSettlement();
   if (lastSettlement && !settlement) body.last_settlement = lastSettlement;
