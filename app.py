@@ -326,18 +326,27 @@ def run_research(question, session_id, pre_settlement=None,
         for line in stdout_data.splitlines():
             output_lines.append(line.strip())
     except Exception as e:
+        import logging, traceback
+        logging.error("research.py subprocess exception: %s\n%s", e, traceback.format_exc())
         yield _sse({"step": "error", "text": f"שגיאה: {e}", "done": True})
         return
     finally:
         _research_lock.release()
 
     if proc.returncode != 0:
+        import logging
+        logging.error(
+            "research.py failed (exit %d) cmd=%s\nOutput:\n%s",
+            proc.returncode, cmd,
+            "\n".join(output_lines[-30:])
+        )
         # Check if it's a "no deals" situation vs real failure
         last_lines = " ".join(output_lines[-10:])
         if "אין עסקאות" in last_lines or "0 deals" in last_lines or "נמצאו 0" in last_lines:
             yield _sse({"step": "error", "text": f"לא נמצאו עסקאות עבור {label} עם הפרמטרים שבחרת. נסה לשנות את הסינון או לחפש אזור רחב יותר.", "done": True})
         else:
-            yield _sse({"step": "error", "text": "אירעה שגיאה בשליפת הנתונים — נסה שוב.", "done": True})
+            error_hint = output_lines[-1] if output_lines else "no output"
+            yield _sse({"step": "error", "text": f"אירעה שגיאה בשליפת הנתונים — נסה שוב. ({error_hint})", "done": True})
         return
 
     # Resolve the actual label that research.py used (may differ from user input
