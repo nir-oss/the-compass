@@ -209,9 +209,13 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
             viewport={"width": 1280, "height": 800},
         )
         page = await context.new_page()
-        await page.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
-        )
+        try:
+            from playwright_stealth import stealth_async
+            await stealth_async(page)
+        except ImportError:
+            await page.add_init_script(
+                "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+            )
 
         url = f"https://www.nadlan.gov.il/?view=settlement&id={settlement_id}&page=deals"
         print(f"  Opening: {url}")
@@ -223,6 +227,10 @@ async def get_recaptcha_token(settlement_id: int) -> Optional[str]:
             token = await page.evaluate("sessionStorage.getItem('recaptchaServerToken')")
             if token:
                 token = token.strip().strip('"')
+                if token.startswith("{") or token.startswith("["):
+                    if i % 10 == 9:
+                        print(f"  Still waiting (got error JSON)... ({i + 1}s)", flush=True)
+                    continue
                 if token and token not in ("null", "None", "undefined"):
                     print(f"  Token obtained after {i + 1}s!")
                     token_holder.append(token)

@@ -82,10 +82,14 @@ async def _fetch_headless(settlement_id: int) -> Optional[str]:
                 ),
             )
             page = await context.new_page()
-            # Mask automation fingerprint
-            await page.add_init_script(
-                "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
-            )
+            # Apply stealth patches to hide automation fingerprint
+            try:
+                from playwright_stealth import stealth_async
+                await stealth_async(page)
+            except ImportError:
+                await page.add_init_script(
+                    "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+                )
 
             url = f"https://www.nadlan.gov.il/?view=settlement&id={settlement_id}&page=deals"
             print(f"[token_cache] Loading {url} ...")
@@ -96,6 +100,11 @@ async def _fetch_headless(settlement_id: int) -> Optional[str]:
                 token = await page.evaluate("sessionStorage.getItem('recaptchaServerToken')")
                 if token:
                     token = token.strip().strip('"')
+                    # Skip JSON error responses (e.g. {"ok":false,"error":"..."})
+                    if token.startswith("{") or token.startswith("["):
+                        if i % 15 == 14:
+                            print(f"[token_cache] Still waiting (got error JSON)... ({i+1}s)")
+                        continue
                     if token and token not in ("null", "None", "undefined"):
                         print(f"[token_cache] Token obtained after {i+1}s")
                         token_holder.append(token)
