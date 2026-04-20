@@ -81,7 +81,7 @@ def lookup_settlement(name: str) -> Optional[int]:
 
     # Exact substring match first
     for sid, info in data.items():
-        if name_lower in info.get("SETL_NAME", "").lower():
+        if name_lower in str(info.get("SETL_NAME", "")).lower():
             return int(sid)
 
     # Fuzzy fallback: ignore yud doublings (הרצליה ↔ הרצלייה) and similar
@@ -110,7 +110,7 @@ def lookup_street(settlement_id: int, street_name: str) -> Optional[int]:
     streets = data.get("otherSettlmentStreets", [])
     name_lower = street_name.lower()
     for s in streets:
-        if isinstance(s, dict) and name_lower in s.get("title", "").lower():
+        if isinstance(s, dict) and name_lower in str(s.get("title", "")).lower():
             return s["id"]
     return None
 
