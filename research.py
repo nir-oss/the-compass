@@ -1,15 +1,15 @@
 """
 research.py — CLI entry point for the Nadlan Research System.
 
-Usage:
-  python3 research.py --settlement "תל אביב" --street "דיזנגוף" [--limit 200] [--year 2025]
-  python3 research.py --settlement "תל אביב" --token "UUID-FROM-BROWSER"
+Data priority:
+  1. odata_db  — local SQLite built from odata.org.il ZIP (20 major cities, no reCAPTCHA)
+  2. nadlan.gov.il live scraping — fallback with reCAPTCHA token (all cities)
 
-Steps:
-  1. Fetch deals via nadlan_scraper.py
-  2. Analyze via analyze.py
-  3. Generate HTML report via report.py
-  4. Open HTML in browser
+Exit codes:
+  0  — success
+  1  — general error (no data, settlement not found, etc.)
+  2  — NEEDS_TOKEN: reCAPTCHA token required (live scraping path only)
+  3  — CITY_UNAVAILABLE: city not in odata dataset and live scraping unavailable
 """
 
 import argparse
@@ -29,6 +29,7 @@ from nadlan_scraper import (
 )
 from analyze import analyze
 from report import generate_html
+import odata_db
 
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", str(Path(__file__).parent / "output"))
 
@@ -38,115 +39,29 @@ def _save_json(data, path):
     Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def run(settlement_name, street_name=None, neighborhood_name=None,
-        limit=200, year=None, min_year=None, token=None,
-        rooms=None, property_type=None,
-        min_price=None, max_price=None,
-        min_area=None, max_area=None):
-    """
-    Full pipeline: scrape → analyze → report → open browser.
-
-    Returns:
-        str: path to the generated HTML report
-    """
-    # 1. Settlement
-    print(f"מחפש יישוב: '{settlement_name}'...")
-    settlement_id = lookup_settlement(settlement_name)
-    if not settlement_id:
-        print(f"שגיאה: יישוב '{settlement_name}' לא נמצא.")
-        sys.exit(1)
-    print(f"  → ID: {settlement_id}")
-
-    # 2. Street / neighborhood (optional; street takes priority)
-    base_id, base_name, search_label = settlement_id, "settlmentID", settlement_name
-    neighborhood_filter = None  # client-side fallback when no direct neighborhood ID
-
-    if street_name:
-        print(f"מחפש רחוב: '{street_name}'...")
-        street_id = lookup_street(settlement_id, street_name)
-        if street_id:
-            base_id, base_name, search_label = street_id, "streetCode", street_name
-            print(f"  → ID: {street_id}")
-        else:
-            print(f"  ⚠ רחוב לא נמצא, מחפש ברמת יישוב.")
-
-    elif neighborhood_name:
-        print(f"מחפש שכונה: '{neighborhood_name}'...")
-        nbhd = lookup_neighborhood(settlement_id, neighborhood_name)
-        if nbhd:
-            nbhd_id, nbhd_matched = nbhd
-            base_id, base_name, search_label = nbhd_id, "neighborhoodId", nbhd_matched
-            # Also apply client-side neighborhood filter as secondary accuracy check
-            neighborhood_filter = nbhd_matched
-            print(f"  → ID שכונה: {nbhd_id} ({nbhd_matched})")
-        else:
-            # Fall back: fetch at settlement level and filter by neighborhoodName
-            search_label = neighborhood_name
-            neighborhood_filter = neighborhood_name
-            print(f"  → שכונה לא נמצאה ישירות, מסנן מתוך עסקאות היישוב")
-
-    # 3. reCAPTCHA token — prefer cache, fall back to headless fetch, then manual
-    if token:
-        print("משתמש ב-token ידני.")
-    else:
-        # Try cache first (populated by token_cache background thread in app.py)
-        try:
-            import token_cache
-            token = token_cache.get()
-        except ImportError:
-            token = None
-
-        if token:
-            print(f"משתמש ב-token מהcache.")
-        else:
-            print("מושך token חדש (headless)...")
-            try:
-                token = asyncio.run(get_recaptcha_token(settlement_id))
-            except Exception as e:
-                print(f"Playwright error: {e}")
-                token = None
-            if not token:
-                print(f"NEEDS_TOKEN:{json.dumps({'settlement_id': settlement_id, 'settlement_name': settlement_name}, ensure_ascii=False)}")
-                sys.exit(2)
-        print(f"  Token: {token[:40]}...")
-
-    # 4. Fetch
-    filters = dict(rooms=rooms, property_type=property_type,
-                   min_price=min_price, max_price=max_price,
-                   min_area=min_area, max_area=max_area,
-                   min_year=min_year)
-    active = {k: v for k, v in filters.items() if v is not None}
-    if active:
-        print(f"  פילטרים: {active}")
-    print(f"\nמושך עסקאות ({base_name}={base_id}, מקסימום {limit})...")
-    deals = fetch_deals(base_id, base_name, token, max_items=limit, year=year,
-                        neighborhood_filter=neighborhood_filter, **filters)
+def _finish(deals, search_label, settlement_name, limit):
+    """Analyze + report + print summary. Shared by both data paths."""
+    deals = deals[:limit]
     print(f"  נמצאו {len(deals)} עסקאות")
 
     if not deals:
-        print("אין עסקאות לניתוח — ייתכן שה-token פג תוקף (נסה שוב) או שאין נתונים לפרמטרים אלו.")
-        sys.exit(1)  # exit(1) so app.py shows an error instead of silent empty result
+        print("אין עסקאות לניתוח עם הפרמטרים שנבחרו.")
+        sys.exit(1)
 
     raw_path = Path(OUTPUT_DIR) / f"deals_raw_{search_label}.json"
     _save_json(deals, raw_path)
     print(f"  נשמר: {raw_path}")
 
-    # 5. Analyze
     print("מנתח נתונים...")
     stats = analyze(deals, street=search_label, settlement=settlement_name)
+    _save_json(stats, Path(OUTPUT_DIR) / f"analysis_{search_label}.json")
 
-    stats_path = Path(OUTPUT_DIR) / f"analysis_{search_label}.json"
-    _save_json(stats, stats_path)
-
-    # 6. Report
     print("מייצר דוח HTML...")
     report_path = generate_html(stats, output_dir=OUTPUT_DIR, street=search_label)
     print(f"  נשמר: {report_path}")
 
-    # 7. Open in browser
     webbrowser.open(f"file://{Path(report_path).resolve()}")
 
-    # 8. Print summary to stdout
     overall = stats["prices"]["overall"]
     direction_heb = {"rising": "עולה", "falling": "יורדת", "stable": "יציבה"}.get(
         stats["trends"]["direction"], ""
@@ -160,6 +75,109 @@ def run(settlement_name, street_name=None, neighborhood_name=None,
     print(f"{'='*50}\n")
 
     return report_path
+
+
+def run(settlement_name, street_name=None, neighborhood_name=None,
+        limit=200, year=None, min_year=None, token=None,
+        rooms=None, property_type=None,
+        min_price=None, max_price=None,
+        min_area=None, max_area=None):
+
+    search_label = street_name or neighborhood_name or settlement_name
+
+    # ── Path A: odata local DB ────────────────────────────────────────────────
+    if odata_db.is_city_available(settlement_name):
+        if not odata_db.is_ready():
+            print(f"CITY_UNAVAILABLE:{json.dumps({'reason': 'loading', 'city': settlement_name}, ensure_ascii=False)}")
+            sys.exit(3)
+
+        print(f"[odata] שולף נתונים מהמסד המקומי עבור '{settlement_name}'...")
+        deals = odata_db.query(
+            city_name=settlement_name,
+            street=street_name,
+            neighborhood=neighborhood_name,
+            rooms=rooms,
+            property_type=property_type,
+            min_price=min_price,
+            max_price=max_price,
+            min_area=min_area,
+            max_area=max_area,
+            min_year=min_year,
+            year=year,
+            max_items=limit,
+        )
+        return _finish(deals, search_label, settlement_name, limit)
+
+    # ── Path B: city not in odata → try live scraping ────────────────────────
+    print(f"מחפש יישוב: '{settlement_name}'...")
+    settlement_id = lookup_settlement(settlement_name)
+    if not settlement_id:
+        print(f"CITY_UNAVAILABLE:{json.dumps({'reason': 'not_found', 'city': settlement_name}, ensure_ascii=False)}")
+        sys.exit(3)
+    print(f"  → ID: {settlement_id}")
+
+    base_id, base_name = settlement_id, "settlmentID"
+    neighborhood_filter = None
+
+    if street_name:
+        print(f"מחפש רחוב: '{street_name}'...")
+        street_id = lookup_street(settlement_id, street_name)
+        if street_id:
+            base_id, base_name = street_id, "streetCode"
+            print(f"  → ID: {street_id}")
+        else:
+            print(f"  ⚠ רחוב לא נמצא, מחפש ברמת יישוב.")
+
+    elif neighborhood_name:
+        print(f"מחפש שכונה: '{neighborhood_name}'...")
+        nbhd = lookup_neighborhood(settlement_id, neighborhood_name)
+        if nbhd:
+            nbhd_id, nbhd_matched = nbhd
+            base_id, base_name = nbhd_id, "neighborhoodId"
+            search_label = nbhd_matched
+            neighborhood_filter = nbhd_matched
+            print(f"  → ID שכונה: {nbhd_id} ({nbhd_matched})")
+        else:
+            neighborhood_filter = neighborhood_name
+            print(f"  → שכונה לא נמצאה ישירות, מסנן מתוך עסקאות היישוב")
+
+    # Token
+    if token:
+        print("משתמש ב-token ידני.")
+    else:
+        try:
+            import token_cache
+            token = token_cache.get()
+        except ImportError:
+            token = None
+
+        if token:
+            print("משתמש ב-token מהcache.")
+        else:
+            print("מושך token חדש (headless)...")
+            try:
+                token = asyncio.run(get_recaptcha_token(settlement_id))
+            except Exception as e:
+                print(f"Playwright error: {e}")
+                token = None
+            if not token:
+                print(f"NEEDS_TOKEN:{json.dumps({'settlement_id': settlement_id, 'settlement_name': settlement_name}, ensure_ascii=False)}")
+                sys.exit(2)
+        print(f"  Token: {token[:40]}...")
+
+    filters = dict(rooms=rooms, property_type=property_type,
+                   min_price=min_price, max_price=max_price,
+                   min_area=min_area, max_area=max_area,
+                   min_year=min_year)
+    active = {k: v for k, v in filters.items() if v is not None}
+    if active:
+        print(f"  פילטרים: {active}")
+
+    print(f"\nמושך עסקאות ({base_name}={base_id}, מקסימום {limit})...")
+    deals = fetch_deals(base_id, base_name, token, max_items=limit, year=year,
+                        neighborhood_filter=neighborhood_filter, **filters)
+
+    return _finish(deals, search_label, settlement_name, limit)
 
 
 def main():

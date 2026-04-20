@@ -343,6 +343,27 @@ def run_research(question, session_id, pre_settlement=None,
             "\n".join(output_lines[-30:])
         )
 
+        # Exit code 3 = CITY_UNAVAILABLE
+        if proc.returncode == 3:
+            unavail_data = {}
+            for line in output_lines:
+                if line.startswith("CITY_UNAVAILABLE:"):
+                    try:
+                        unavail_data = json.loads(line[len("CITY_UNAVAILABLE:"):])
+                    except Exception:
+                        pass
+                    break
+            reason = unavail_data.get("reason", "not_found")
+            if reason == "loading":
+                msg = f"הנתונים עבור {settlement} נטענים כעת — נסה שוב בעוד כמה דקות."
+            else:
+                msg = (
+                    f"המערכת בהרצה — {settlement} עדיין לא נמצאת במסגרת הפריסה שלנו. "
+                    "אנחנו עובדים על הרחבת הכיסוי לערים נוספות."
+                )
+            yield _sse({"step": "error", "text": msg, "done": True})
+            return
+
         # Exit code 2 = NEEDS_TOKEN — no reCAPTCHA token available
         if proc.returncode == 2:
             needs_data = {}
@@ -435,6 +456,10 @@ def create_app(config=None):
     # Start background reCAPTCHA token refresh (headless Playwright)
     import token_cache
     token_cache.start(settlement_id=5000)
+
+    # Start background odata.org.il DB build (local SQLite for 20 major cities)
+    import odata_db
+    odata_db.start()
 
     def require_session(f):
         @wraps(f)
