@@ -6,8 +6,8 @@ services:
     plan: starter
     buildCommand: |
       pip install -r requirements.txt
-      PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium
-      PLAYWRIGHT_BROWSERS_PATH=0 playwright install-deps chromium
+      PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/pw-browsers playwright install chromium
+      PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/pw-browsers playwright install-deps chromium
     startCommand: gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120 --worker-class gthread
     envVars:
       - key: ANTHROPIC_API_KEY
@@ -19,7 +19,7 @@ services:
       - key: OUTPUT_DIR
         value: /app/output
       - key: PLAYWRIGHT_BROWSERS_PATH
-        value: "0"
+        value: /opt/render/project/pw-browsers
     disk:
       name: data
       mountPath: /app/output
